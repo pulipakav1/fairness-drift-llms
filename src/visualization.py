@@ -63,8 +63,16 @@ def _ordered_models_for_provider(provider_model_set):
 def compute_fairness_drift(df, metrics=None):
     """
     Compute version-to-version fairness drift for every family in
-    VERSION_ORDERING, using exactly 1,000-sample bootstrap resampling for
-    95% confidence intervals.
+    VERSION_ORDERING, using paired per-prompt bootstrap resampling (1,000
+    resamples) for 95% confidence intervals.
+
+    Each benchmark prompt carries a stable prompt_id that is reused across
+    every model version, so a version-to-version comparison is a paired
+    design: resampling vals_t and vals_t1 independently (as an earlier
+    version of this function did) discards that pairing, adds two unrelated
+    sources of sampling variance, and inflates both CI width and Cohen's d
+    relative to the paired estimate. See Section 4.3 / Section 5 of the
+    accompanying paper for the corrected numbers this produces.
 
     Positive drift = metric increased between versions
       (good for sentiment; bad for toxicity and stereotype).
@@ -95,18 +103,24 @@ def compute_fairness_drift(df, metrics=None):
                 for metric in metrics:
                     if metric not in df.columns:
                         continue
-                    vals_t = ds_t[metric].dropna().values
-                    vals_t1 = ds_t1[metric].dropna().values
-                    if len(vals_t) == 0 or len(vals_t1) == 0:
+                    paired = ds_t[["prompt_id", metric]].dropna().merge(
+                        ds_t1[["prompt_id", metric]].dropna(),
+                        on="prompt_id", suffixes=("_t", "_t1"),
+                    )
+                    n = len(paired)
+                    if n == 0:
                         continue
+                    vals_t = paired[f"{metric}_t"].values
+                    vals_t1 = paired[f"{metric}_t1"].values
+                    diffs = vals_t1 - vals_t
 
                     rng = np.random.default_rng(42)
+                    idx = np.arange(n)
                     boot_drifts = np.array([
-                        rng.choice(vals_t1, size=len(vals_t1), replace=True).mean()
-                        - rng.choice(vals_t, size=len(vals_t), replace=True).mean()
+                        diffs[rng.choice(idx, size=n, replace=True)].mean()
                         for _ in range(1000)
                     ])
-                    drift = float(np.mean(vals_t1) - np.mean(vals_t))
+                    drift = float(diffs.mean())
                     records.append({
                         "family": family,
                         "model_t": m_t,
@@ -116,8 +130,8 @@ def compute_fairness_drift(df, metrics=None):
                         "drift": round(drift, 6),
                         "ci_lower": round(float(np.percentile(boot_drifts, 2.5)), 6),
                         "ci_upper": round(float(np.percentile(boot_drifts, 97.5)), 6),
-                        "n_t": int(len(vals_t)),
-                        "n_t1": int(len(vals_t1)),
+                        "n_t": n,
+                        "n_t1": n,
                         "n_bootstrap": 1000,
                     })
 
