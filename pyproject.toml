@@ -1,14 +1,13 @@
 [project]
-name = "evolving-bias"
+name = "fairness-drift-llms"
 version = "0.1.0"
-description = "Longitudinal multi-benchmark fairness evaluation for large language models."
+description = "Paired analysis of fairness drift across LLM releases."
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "pandas>=2.0",
     "numpy>=1.24",
     "matplotlib>=3.7",
-    "seaborn>=0.13",
     "scipy>=1.10",
     "tqdm>=4.66",
     "requests>=2.31",
@@ -22,9 +21,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = [
-    "pytest>=8.0",
-]
+dev = ["pytest>=8.0", "ruff>=0.5"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -32,5 +29,10 @@ pythonpath = ["."]
 addopts = "-q"
 filterwarnings = [
     "ignore:codecs.open\\(\\) is deprecated.*:DeprecationWarning:vaderSentiment.*",
-    "ignore:urllib3.*doesn't match.*:requests.exceptions.RequestsDependencyWarning",
 ]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]

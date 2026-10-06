@@ -1,2 +1,0 @@
-"""Structured benchmark pipeline stages."""
-

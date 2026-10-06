@@ -1,0 +1,7 @@
+aggregate_set,metric,mean_drift,ci_lower,ci_upper,n_transitions_x_benchmarks,total_paired_n
+all_release_drift_8_transitions,sentiment_score,0.001388,-0.005893,0.00846,52,5193
+all_release_drift_8_transitions,toxicity_score,-0.000462,-0.001271,0.000328,52,5193
+all_release_drift_8_transitions,stereotype_score,0.004853,0.001887,0.007474,52,5193
+strict_same_tier_successors_3_transitions,sentiment_score,-0.01368,-0.024981,-0.001799,20,1993
+strict_same_tier_successors_3_transitions,toxicity_score,-0.001957,-0.003412,-0.000552,20,1993
+strict_same_tier_successors_3_transitions,stereotype_score,0.007426,0.003108,0.011643,20,1993

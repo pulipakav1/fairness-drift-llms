@@ -1,139 +1,105 @@
-import os 
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    pass  
+from pathlib import Path
 
-# API KEYS
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-HUGGINGFACE_API_KEY = os.getenv("HUGGINGFACE_API_KEY")
-PERSPECTIVE_API_KEY = os.getenv("PERSPECTIVE_API_KEY")
+ROOT = Path(__file__).resolve().parents[1]
+RAW_PATH = ROOT / "outputs" / "results" / "raw_results_20251115_035107.csv"
+SCORES_PATH = ROOT / "outputs" / "results" / "scored_responses.csv"
+TABLES_DIR = ROOT / "outputs" / "tables"
+FIGURES_DIR = ROOT / "figures"
 
-#MODELS
+DATASETS = ["bbq", "bold", "crows_pairs", "holistic_bias", "realtoxicityprompts", "stereoset", "winobias"]
+PROMPTS_PER_DATASET = 100
+METRICS = ["sentiment_score", "toxicity_score", "stereotype_score"]
 
-# Claude is split into two separate families for drift computation.
-# CLAUDE_MODELS keeps all Claude models under the single "claude" provider
-# key used in run logic and results CSVs.
-CLAUDE_SONNET_MODELS = [
-    "claude-sonnet-4-20250514",
-    "claude-sonnet-4-5-20250929",
-]
+SEED = 42
+N_BOOT = 1000
+ALPHA = 0.05
+MIN_GROUP_SIZE = 5  # min pairs per demographic test
 
-CLAUDE_OPUS_MODELS = [
-    "claude-opus-4-1-20250805",
-]
+# Dropped in the ablation
+ABLATION_EXCLUDED = ["stereoset", "crows_pairs"]
 
-CLAUDE_MODELS = CLAUDE_SONNET_MODELS + CLAUDE_OPUS_MODELS
-
-# Chronological release order (oldest → newest) within each provider family.
-OPENAI_MODELS = [
-    "gpt-4-turbo",
-    "gpt-4o",
-    "gpt-4o-mini",
-    "gpt-4.1",
-    "gpt-4.1-mini",
-]
-
-GEMINI_MODELS = [
-    "gemini-2.0-flash",
-    "gemini-2.5-flash",
-    "gemini-2.5-flash-lite",
-    "gemini-2.5-pro",
-]
-
-ALL_MODELS = {
-    "claude": CLAUDE_MODELS,
-    "openai": OPENAI_MODELS,
-    "gemini": GEMINI_MODELS,
-}
-
-# Open-Weighted Models
-LLAMA31_MODELS = [
-    "meta-llama/Llama-3.1-8B-Instruct",
-    "meta-llama/Llama-3.1-70B-Instruct",
-    "meta-llama/Llama-3.1-405B-Instruct",
-]
-
-LLAMA32_MODELS = [
-    "meta-llama/Llama-3.2-1B-Instruct",
-    "meta-llama/Llama-3.2-3B-Instruct",
-]
-
-GEMMA_MODELS = [
-    "google/gemma-2-2b-it",
-    "google/gemma-2-9b-it",
-]
-
-HF_MODELS = {
-    "llama31": LLAMA31_MODELS,
-    "llama32": LLAMA32_MODELS,
-    "gemma": GEMMA_MODELS
-}
-
-# Version ordering for longitudinal drift computation.
-# Each key is a provider family; models are listed oldest-first.
-# Used by visualization.compute_fairness_drift() — do not reorder without
-# also updating the drift computation logic.
-VERSION_ORDERING = {
-    "openai": [
-        "gpt-4-turbo",
-        "gpt-4o",
-        "gpt-4o-mini",
-        "gpt-4.1",
-        "gpt-4.1-mini",
-    ],
-    "claude_sonnet": [
-        "claude-sonnet-4-20250514",
-        "claude-sonnet-4-5-20250929",
-    ],
-    "claude_opus": [
-        "claude-opus-4-1-20250805",
-    ],
-    "gemini": [
-        "gemini-2.0-flash",
-        "gemini-2.5-flash",
-        "gemini-2.5-flash-lite",
-        "gemini-2.5-pro",
-    ],
+# Oldest first; this order fixes the bootstrap draws
+FAMILIES = {
+    "openai": ["gpt-4-turbo", "gpt-4o", "gpt-4o-mini", "gpt-4.1", "gpt-4.1-mini"],
+    "claude_sonnet": ["claude-sonnet-4-20250514", "claude-sonnet-4-5-20250929"],
+    "claude_opus": ["claude-opus-4-1-20250805"],
+    "gemini": ["gemini-2.0-flash", "gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.5-pro"],
     "llama31": [
         "meta-llama/Llama-3.1-8B-Instruct",
         "meta-llama/Llama-3.1-70B-Instruct",
         "meta-llama/Llama-3.1-405B-Instruct",
     ],
-    "llama32": [
-        "meta-llama/Llama-3.2-1B-Instruct",
-        "meta-llama/Llama-3.2-3B-Instruct",
-    ],
-    "gemma": [
-        "google/gemma-2-2b-it",
-        "google/gemma-2-9b-it",
-    ],
+    "llama32": ["meta-llama/Llama-3.2-1B-Instruct", "meta-llama/Llama-3.2-3B-Instruct"],
+    "gemma": ["google/gemma-2-2b-it", "google/gemma-2-9b-it"],
 }
 
-#REQUIREMENTS
-PROMPTS_PER_MODEL = 1000
-MAX_TOKENS = 500
-OUTPUT_DIR = "outputs/results"
-PLOTS_DIR = "outputs/plots"
-TABLES_DIR = "outputs/tables"
+# Provider key in the results files
+PROVIDERS = {
+    "openai": "openai", "claude_sonnet": "claude", "claude_opus": "claude", "gemini": "gemini",
+    "llama31": "llama31", "llama32": "llama32", "gemma": "gemma",
+}
 
-for dir_name in [OUTPUT_DIR, PLOTS_DIR, TABLES_DIR]:
-    os.makedirs(dir_name, exist_ok=True)
+# Release chains: 11 models, 8 transitions
+RELEASE_CHAINS = {family: FAMILIES[family] for family in ("openai", "claude_sonnet", "gemini")}
 
-#DEMOGRAPHIC AXES 
-DEMOGRAPHIC_AXES = [
-    "age",
-    "disability_status",
-    "gender_identity",
-    "nationality",
-    "physical_appearance",
-    "race_ethnicity",
-    "race_x_gender",
-    "race_x_ses",
-    "religion",
-    "ses",
-    "sexual_orientation"
+# Same-tier transitions
+STRICT_TRANSITIONS = {
+    ("openai", "gpt-4-turbo", "gpt-4o"),
+    ("claude_sonnet", "claude-sonnet-4-20250514", "claude-sonnet-4-5-20250929"),
+    ("gemini", "gemini-2.0-flash", "gemini-2.5-flash"),
+}
+
+# Descriptive only, no BH
+CONTEXT_TRANSITIONS = [
+    ("claude_cross_tier", "claude-sonnet-4-20250514", "claude-opus-4-1-20250805"),
+    ("claude_cross_tier", "claude-opus-4-1-20250805", "claude-sonnet-4-5-20250929"),
+    ("llama31_scale", "meta-llama/Llama-3.1-8B-Instruct", "meta-llama/Llama-3.1-70B-Instruct"),
+    ("llama31_scale", "meta-llama/Llama-3.1-70B-Instruct", "meta-llama/Llama-3.1-405B-Instruct"),
+    ("llama32_scale", "meta-llama/Llama-3.2-1B-Instruct", "meta-llama/Llama-3.2-3B-Instruct"),
+    ("gemma_scale", "google/gemma-2-2b-it", "google/gemma-2-9b-it"),
 ]
+
+# Unlisted labels are excluded
+AXIS_MAP = {
+    "gender": "Gender", "gender_identity": "Gender",
+    "race": "Race/Ethnicity", "race-color": "Race/Ethnicity",
+    "religion": "Religion",
+    "age": "Age", "Age": "Age",
+    "disability": "Disability", "ability": "Disability",
+    "nationality": "Nationality",
+    "socioeconomic": "Socioeconomic",
+}
+
+PROVIDER_GROUPS = {
+    "OpenAI": ["openai"],
+    "Anthropic": ["claude"],
+    "Google (Gemini)": ["gemini"],
+    "Meta (LLaMA)": ["llama31", "llama32"],
+    "Google (Gemma)": ["gemma"],
+}
+
+# Plot labels
+METRIC_LABELS = {"sentiment_score": "Sentiment", "toxicity_score": "Toxicity", "stereotype_score": "Stereotype"}
+DATASET_LABELS = {
+    "bbq": "BBQ", "bold": "BOLD", "crows_pairs": "CrowS-Pairs", "holistic_bias": "HolisticBias",
+    "realtoxicityprompts": "RealToxicityPrompts", "stereoset": "StereoSet", "winobias": "WinoBias",
+}
+MODEL_LABELS = {
+    "gpt-4-turbo": "GPT-4-turbo", "gpt-4o": "4o", "gpt-4o-mini": "4o-mini", "gpt-4.1": "4.1",
+    "gpt-4.1-mini": "4.1-mini",
+    "claude-sonnet-4-20250514": "Sonnet 4", "claude-sonnet-4-5-20250929": "Sonnet 4.5",
+    "claude-opus-4-1-20250805": "Opus 4.1",
+    "gemini-2.0-flash": "Gemini 2.0-Flash", "gemini-2.5-flash": "2.5-Flash",
+    "gemini-2.5-flash-lite": "2.5-Flash-Lite", "gemini-2.5-pro": "2.5-Pro",
+    "meta-llama/Llama-3.1-8B-Instruct": "LLaMA-3.1 8B", "meta-llama/Llama-3.1-70B-Instruct": "70B",
+    "meta-llama/Llama-3.1-405B-Instruct": "405B",
+    "meta-llama/Llama-3.2-1B-Instruct": "LLaMA-3.2 1B", "meta-llama/Llama-3.2-3B-Instruct": "3B",
+    "google/gemma-2-2b-it": "Gemma-2 2B", "google/gemma-2-9b-it": "9B",
+}
+
+
+def release_transitions():
+    """Yield (family, old_model, new_model) for the 8 release transitions."""
+    for family, chain in RELEASE_CHAINS.items():
+        for old_model, new_model in zip(chain, chain[1:]):
+            yield family, old_model, new_model

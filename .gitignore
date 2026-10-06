@@ -6,42 +6,20 @@
 # Python
 __pycache__/
 *.pyc
-*.pyo
-*.pyd
-.Python
 .pytest_cache/
 .ruff_cache/
-.mypy_cache/
-
-# Virtual environments
 .venv/
 venv/
-env/
 
-# Runtime outputs
+# Raw and scored responses (contain prompts and model outputs; not distributed)
 outputs/results/*
-outputs/plots/*
-outputs/tables/*
 !outputs/results/.gitkeep
-!outputs/plots/.gitkeep
-!outputs/tables/.gitkeep
 
-# LaTeX build outputs
-*.aux
-*.blg
-*.fdb_latexmk
-*.fls
-*.log
-*.out
-*.synctex.gz
-
-# OS
+# Editors and OS
+.vscode/
+.idea/
 .DS_Store
 Thumbs.db
 
-# IDE
-.vscode/
-.idea/
-
-# Claude Code internal state
+# Local tool state
 .claude/

@@ -1,0 +1,13 @@
+metric_1,metric_2,pearson_r,p_value,analysis_level,benchmark_set,n_models,n
+sentiment_score,toxicity_score,-0.1315,2.1150115396773638e-50,per_example,all_7,19,12789
+sentiment_score,stereotype_score,0.0192,0.029632643900851154,per_example,all_7,19,12789
+toxicity_score,stereotype_score,0.0735,8.671476203613586e-17,per_example,all_7,19,12789
+sentiment_score,toxicity_score,-0.0186,0.8348056056511213,model_benchmark,all_7,19,128
+sentiment_score,stereotype_score,0.0004,0.9963376214291364,model_benchmark,all_7,19,128
+toxicity_score,stereotype_score,0.356,3.713965614760279e-05,model_benchmark,all_7,19,128
+sentiment_score,toxicity_score,-0.0047,0.6535160309009389,per_example,ablation_5,19,8989
+sentiment_score,stereotype_score,0.0522,7.315495621129553e-07,per_example,ablation_5,19,8989
+toxicity_score,stereotype_score,0.0437,3.433898517854909e-05,per_example,ablation_5,19,8989
+sentiment_score,toxicity_score,0.4566,6.095596521855811e-06,model_benchmark,ablation_5,19,90
+sentiment_score,stereotype_score,0.1213,0.2548666497639875,model_benchmark,ablation_5,19,90
+toxicity_score,stereotype_score,0.2161,0.04075934099898631,model_benchmark,ablation_5,19,90

@@ -1,0 +1,12 @@
+axis,label,datasets,prompts_per_model,min_prompts_per_model,paired_n,eligible_for_testing
+Gender,gender,crows_pairs;stereoset,33,33,133,True
+Gender,gender_identity,winobias,100,100,133,True
+Race/Ethnicity,race,stereoset,51,51,85,True
+Race/Ethnicity,race-color,crows_pairs,34,34,85,True
+Religion,religion,crows_pairs,3,3,3,False
+Age,age,crows_pairs,2,2,102,True
+Age,Age,bbq,100,99,102,True
+Disability,disability,crows_pairs,11,11,111,True
+Disability,ability,holistic_bias,100,100,111,True
+Nationality,nationality,crows_pairs,10,10,10,True
+Socioeconomic,socioeconomic,crows_pairs,10,10,10,True
